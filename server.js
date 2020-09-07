@@ -15,12 +15,7 @@ var port = process.env.PORT || 3000;
 /** this project needs a db !! **/
 
 // mongoose.connect(process.env.MONGOLAB_URI);
-var db = mongoose.connect(
-  "mongodb+srv://test:test@cluster0-nvh3p.mongodb.net/test?retryWrites=true&w=majority",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
-
-console.log(mongoose.connection.readyState);
+const dbURI = 'mongodb+srv://user:test1234@cluster0.enctm.mongodb.net/shorturl?retryWrites=true&w=majority';
 
 app.use(cors());
 
@@ -39,10 +34,10 @@ var urlSchema = new Schema({
 });
 var url = mongoose.model("url", urlSchema);
 
-var createAndSaveUrl = function(txt, done) {
+var createAndSaveUrl = function (txt, done) {
   var url1 = new url({ name: txt });
 
-  url1.save(function(err, data) {
+  url1.save(function (err, data) {
     if (err) return console.error(err);
     done(null, data);
   });
@@ -52,12 +47,12 @@ var createAndSaveUrl = function(txt, done) {
 
 app.use("/public", express.static(process.cwd() + "/public"));
 
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
   res.sendFile(process.cwd() + "/views/index.html");
 });
 
 // your first API endpoint...
-app.get("/api/hello", function(req, res) {
+app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
@@ -79,11 +74,11 @@ app.post("/api/shorturl/new", (req, res, next) => {
       } else {
         console.log("so, your url is correct. Let's check if it's exist");
         //check existance in db
-        url.find({ name: req.body.url }, function(err, data) {
+        url.find({ name: req.body.url }, function (err, data) {
           if (data.length) {
             res.json({ name: data[0].name, short_url: data[0]._id });
           } else { //this part for creating new one
-            createAndSaveUrl(req.body.url, function(err, data) {
+            createAndSaveUrl(req.body.url, function (err, data) {
               if (err) {
                 return next(err);
               }
@@ -91,7 +86,7 @@ app.post("/api/shorturl/new", (req, res, next) => {
             });
           }
         });
-        
+
       }
     });
     //goto https://www.freecodecamp.org/forum/t/help-with-node-js-dns-lookup/311144
@@ -100,11 +95,11 @@ app.post("/api/shorturl/new", (req, res, next) => {
   }
 });
 
-app.get("/api/shorturl/:id", function(req, res) {
+app.get("/api/shorturl/:id", function (req, res) {
   var id = req.params.id;
-  url.findById({_id:id},function(err,data){
+  url.findById({ _id: id }, function (err, data) {
     if (err) return res.json({ error: "invalid URL" });;
-    if(data){
+    if (data) {
       //res.json(data);
       res.redirect(data.name);
     } else {
@@ -114,7 +109,15 @@ app.get("/api/shorturl/:id", function(req, res) {
   });
 });
 
+mongoose.connect(dbURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true
+})
+  .then((result) => {
+    console.log('server\'s listening on port 3000');
+    app.listen(3000);
+  })
+  .catch((err) => console.log(err));
 
-app.listen(port, function() {
-  console.log("Node.js listening ...");
-});
+
